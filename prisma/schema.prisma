@@ -1,0 +1,245 @@
+// Prisma schema for Clinical Trial Management System
+// MySQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleType {
+  ADMIN
+  INVESTIGATOR
+  DOCTOR
+  COORDINATOR
+  MONITOR
+}
+
+enum TrialStatus {
+  DRAFT
+  RECRUITING
+  ACTIVE
+  SUSPENDED
+  COMPLETED
+  TERMINATED
+}
+
+enum SubjectStatus {
+  SCREENING
+  ENROLLED
+  ACTIVE
+  WITHDRAWN
+  COMPLETED
+}
+
+enum VisitStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum VisitType {
+  SCREENING
+  BASELINE
+  FOLLOW_UP
+  END_OF_STUDY
+  UNSCHEDULED
+}
+
+enum AESeverity {
+  MILD
+  MODERATE
+  SEVERE
+  LIFE_THREATENING
+  FATAL
+}
+
+enum AERelationship {
+  UNRELATED
+  UNLIKELY
+  POSSIBLE
+  PROBABLE
+  DEFINITE
+}
+
+enum AEOutcome {
+  RECOVERED
+  RECOVERING
+  NOT_RECOVERED
+  SEQUELAE
+  FATAL
+}
+
+enum AEAction {
+  NONE
+  DOSE_REDUCED
+  DRUG_WITHDRAWN
+  TREATMENT_GIVEN
+  HOSPITALIZATION
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String
+  name            String
+  role            RoleType  @default(COORDINATOR)
+  phone           String?
+  department      String?
+  title           String?
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  createdTrials   Trial[]   @relation("TrialCreator")
+  createdSubjects Subject[] @relation("SubjectCreator")
+  createdVisits   Visit[]   @relation("VisitCreator")
+  completedVisits Visit[]   @relation("VisitCompleter")
+  createdAEs      AdverseEvent[] @relation("AECreator")
+  
+  @@index([role])
+  @@index([email])
+}
+
+model Trial {
+  id              Int       @id @default(autoincrement())
+  trialNumber     String    @unique
+  title           String
+  shortName       String?
+  description     String?
+  protocolNumber  String?
+  indication      String?
+  drugName        String?
+  phase           String?
+  status          TrialStatus @default(DRAFT)
+  startDate       DateTime?
+  endDate         DateTime?
+  plannedSubjects Int?
+  actualSubjects  Int       @default(0)
+  sponsor         String?
+  cro             String?
+  siteName        String?
+  piName          String?
+  notes           String?
+  createdById     Int
+  createdBy       User      @relation("TrialCreator", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  subjects        Subject[]
+  visits          Visit[]
+  adverseEvents   AdverseEvent[]
+  
+  @@index([status])
+  @@index([trialNumber])
+}
+
+model Subject {
+  id              Int       @id @default(autoincrement())
+  subjectNumber   String    @unique
+  initials        String
+  gender          String?
+  birthDate       DateTime?
+  age             Int?
+  status          SubjectStatus @default(SCREENING)
+  enrollmentDate  DateTime?
+  withdrawalDate  DateTime?
+  withdrawalReason String?
+  trialId         Int
+  trial           Trial     @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  createdById     Int
+  createdBy       User      @relation("SubjectCreator", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  visits          Visit[]
+  adverseEvents   AdverseEvent[]
+  
+  @@index([trialId])
+  @@index([status])
+  @@index([subjectNumber])
+}
+
+model Visit {
+  id              Int       @id @default(autoincrement())
+  visitNumber     String
+  name            String
+  type            VisitType
+  status          VisitStatus @default(SCHEDULED)
+  scheduledDate   DateTime
+  actualDate      DateTime?
+  windowStart     DateTime?
+  windowEnd       DateTime?
+  location        String?
+  notes           String?
+  subjectId       Int
+  subject         Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  trialId         Int
+  trial           Trial     @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  createdById     Int
+  createdBy       User      @relation("VisitCreator", fields: [createdById], references: [id])
+  completedById   Int?
+  completedBy     User?     @relation("VisitCompleter", fields: [completedById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([subjectId])
+  @@index([trialId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model AdverseEvent {
+  id              Int       @id @default(autoincrement())
+  aeNumber        String    @unique
+  term            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime?
+  severity        AESeverity
+  seriousness     Boolean   @default(false)
+  relationship    AERelationship
+  outcome         AEOutcome?
+  action          AEAction?
+  isSAE           Boolean   @default(false)
+  saeReportedDate DateTime?
+  reportedToEthics DateTime?
+  subjectId       Int
+  subject         Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  trialId         Int
+  trial           Trial     @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  createdById     Int
+  createdBy       User      @relation("AECreator", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([subjectId])
+  @@index([trialId])
+  @@index([severity])
+  @@index([isSAE])
+  @@index([relationship])
+}
+
+model AuditLog {
+  id              Int       @id @default(autoincrement())
+  action          String
+  entityType      String
+  entityId        Int
+  fieldName       String?
+  oldValue        String?
+  newValue        String?
+  userId          Int?
+  userEmail       String?
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([action])
+}
