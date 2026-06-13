@@ -10,7 +10,8 @@ import {
   AlertTriangle, 
   Clock,
   Shield,
-  Settings
+  Settings,
+  UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navItems = [
   { name: '随访管理', href: '/visits', icon: Calendar },
   { name: '不良事件', href: '/adverse-events', icon: AlertTriangle },
   { name: '访视时间线', href: '/timeline', icon: Clock },
+  { name: '用户管理', href: '/users', icon: UserCog },
 ];
 
 export default function Sidebar({ user }: { user: any }) {
