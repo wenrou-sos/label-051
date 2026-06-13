@@ -109,10 +109,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       if (!Object.values(RoleType).includes(role)) {
         return NextResponse.json({ error: '无效的角色类型' }, { status: 400 });
       }
-      if (id === userId) {
-        return NextResponse.json({ error: '不能修改自己的角色' }, { status: 400 });
+      if (role !== existing.role) {
+        if (id === userId) {
+          return NextResponse.json({ error: '不能修改自己的角色' }, { status: 400 });
+        }
+        updateData.role = role;
       }
-      updateData.role = role;
     }
 
     if (password !== undefined) {
