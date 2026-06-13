@@ -54,7 +54,49 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: '试验不存在' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: trial });
+    const [subjectStatusGroup, visitStatusGroup, aeSeverityGroup] = await Promise.all([
+      prisma.subject.groupBy({
+        by: ['status'],
+        where: { trialId: id },
+        _count: { status: true },
+      }),
+      prisma.visit.groupBy({
+        by: ['status'],
+        where: { trialId: id },
+        _count: { status: true },
+      }),
+      prisma.adverseEvent.groupBy({
+        by: ['severity'],
+        where: { trialId: id },
+        _count: { severity: true },
+      }),
+    ]);
+
+    const subjectStatusDistribution: Record<string, number> = {};
+    subjectStatusGroup.forEach((item) => {
+      subjectStatusDistribution[item.status] = item._count.status;
+    });
+
+    const visitStatusDistribution: Record<string, number> = {};
+    visitStatusGroup.forEach((item) => {
+      visitStatusDistribution[item.status] = item._count.status;
+    });
+
+    const aeSeverityDistribution: Record<string, number> = {};
+    aeSeverityGroup.forEach((item) => {
+      aeSeverityDistribution[item.severity] = item._count.severity;
+    });
+
+    const trialWithStats = {
+      ...trial,
+      statistics: {
+        subjectStatusDistribution,
+        visitStatusDistribution,
+        aeSeverityDistribution,
+      },
+    };
+
+    return NextResponse.json({ data: trialWithStats });
   } catch (error) {
     console.error('获取试验详情失败:', error);
     return NextResponse.json({ error: '获取试验详情失败' }, { status: 500 });

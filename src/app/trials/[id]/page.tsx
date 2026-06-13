@@ -19,6 +19,7 @@ import {
   subjectStatusLabels,
   cn,
 } from '@/lib/utils';
+import TrialDetailCharts from './charts-client';
 
 interface PageParams {
   params: { id: string };
@@ -121,6 +122,13 @@ export default async function TrialDetailPage({ params }: PageParams) {
           </div>
         </div>
       </div>
+
+      <TrialDetailCharts
+        statistics={trial.statistics || {}}
+        subjectCount={trial._count?.subjects || 0}
+        visitCount={trial._count?.visits || 0}
+        aeCount={trial._count?.adverseEvents || 0}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
