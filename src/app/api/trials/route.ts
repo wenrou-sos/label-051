@@ -27,8 +27,11 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { trialNumber: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search } },
+        { trialNumber: { contains: search } },
+        { shortName: { contains: search } },
+        { drugName: { contains: search } },
+        { indication: { contains: search } },
       ];
     }
 

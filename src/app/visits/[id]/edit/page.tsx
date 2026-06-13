@@ -30,9 +30,12 @@ export default function EditVisitPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const fetchSubjects = async () => {
+  const fetchSubjects = async (trialId?: string) => {
     try {
-      const res = await fetch('/api/subjects?pageSize=100');
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      if (trialId) params.set('trialId', trialId);
+      const res = await fetch(`/api/subjects?${params.toString()}`);
       const data = await res.json();
       setSubjects(data.data || []);
     } catch (error) {
@@ -50,8 +53,9 @@ export default function EditVisitPage() {
     }
   };
 
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
   useEffect(() => {
-    fetchSubjects();
     fetchTrials();
     const fetchVisit = async () => {
       try {
@@ -73,6 +77,9 @@ export default function EditVisitPage() {
             trialId: data.trialId ? String(data.trialId) : '',
             notes: data.notes || '',
           });
+          if (data.trialId) {
+            fetchSubjects(String(data.trialId));
+          }
         } else {
           alert('获取访视数据失败');
           router.push('/visits');
@@ -83,10 +90,21 @@ export default function EditVisitPage() {
         router.push('/visits');
       } finally {
         setFetching(false);
+        setIsInitialLoad(false);
       }
     };
     fetchVisit();
   }, [id, router]);
+
+  useEffect(() => {
+    if (isInitialLoad) return;
+    if (formData.trialId) {
+      fetchSubjects(formData.trialId);
+      setFormData((prev) => ({ ...prev, subjectId: '' }));
+    } else {
+      setSubjects([]);
+    }
+  }, [formData.trialId, isInitialLoad]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

@@ -49,8 +49,18 @@ export async function GET(request: Request) {
     const status = searchParams.get('status') as VisitStatus | null;
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
+    const search = searchParams.get('search') || '';
 
     const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { visitNumber: { contains: search } },
+        { name: { contains: search } },
+        { location: { contains: search } },
+        { notes: { contains: search } },
+      ];
+    }
 
     if (subjectId) {
       where.subjectId = parseInt(subjectId, 10);
@@ -199,6 +209,13 @@ export async function POST(request: Request) {
     });
     if (!trial) {
       return NextResponse.json({ error: '试验不存在' }, { status: 404 });
+    }
+
+    if (subject.trialId !== trialId) {
+      return NextResponse.json(
+        { error: '受试者不属于所选试验，请选择正确的受试者' },
+        { status: 400 }
+      );
     }
 
     const createData: any = {

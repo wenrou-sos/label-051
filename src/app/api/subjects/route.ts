@@ -26,8 +26,8 @@ export async function GET(request: Request) {
     const where: any = {};
     if (search) {
       where.OR = [
-        { subjectNumber: { contains: search, mode: 'insensitive' } },
-        { initials: { contains: search, mode: 'insensitive' } },
+        { subjectNumber: { contains: search } },
+        { initials: { contains: search } },
       ];
     }
     if (status) {
@@ -132,6 +132,11 @@ export async function POST(request: Request) {
           select: { id: true, name: true, email: true },
         },
       },
+    });
+
+    await prisma.trial.update({
+      where: { id: body.trialId },
+      data: { actualSubjects: { increment: 1 } },
     });
 
     await prisma.auditLog.create({

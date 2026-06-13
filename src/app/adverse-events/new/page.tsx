@@ -46,9 +46,12 @@ export default function NewAdverseEventPage() {
     }
   };
 
-  const fetchSubjects = async () => {
+  const fetchSubjects = async (trialId?: string) => {
     try {
-      const res = await fetch('/api/subjects?pageSize=100');
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      if (trialId) params.set('trialId', trialId);
+      const res = await fetch(`/api/subjects?${params.toString()}`);
       const data = await res.json();
       setSubjects(data.data || []);
     } catch (error) {
@@ -58,8 +61,16 @@ export default function NewAdverseEventPage() {
 
   useEffect(() => {
     fetchTrials();
-    fetchSubjects();
   }, []);
+
+  useEffect(() => {
+    if (formData.trialId) {
+      fetchSubjects(formData.trialId);
+      setFormData((prev) => ({ ...prev, subjectId: '' }));
+    } else {
+      setSubjects([]);
+    }
+  }, [formData.trialId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

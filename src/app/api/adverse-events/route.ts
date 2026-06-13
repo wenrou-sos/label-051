@@ -42,9 +42,9 @@ export async function GET(req: NextRequest) {
     }
     if (search) {
       where.OR = [
-        { term: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { aeNumber: { contains: search, mode: 'insensitive' } },
+        { term: { contains: search } },
+        { description: { contains: search } },
+        { aeNumber: { contains: search } },
       ];
     }
 
@@ -151,6 +151,13 @@ export async function POST(req: NextRequest) {
     const trial = await prisma.trial.findUnique({ where: { id: trialId } });
     if (!trial) {
       return NextResponse.json({ error: '试验不存在' }, { status: 404 });
+    }
+
+    if (subject.trialId !== trialId) {
+      return NextResponse.json(
+        { error: '受试者不属于所选试验，请选择正确的受试者' },
+        { status: 400 }
+      );
     }
 
     const userId = parseInt((session.user as any).id, 10);

@@ -45,6 +45,7 @@ export default function VisitsPage() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('pageSize', String(pageSize));
+      if (search) params.set('search', search);
       if (subjectFilter) params.set('subjectId', subjectFilter);
       if (trialFilter) params.set('trialId', trialFilter);
       if (statusFilter) params.set('status', statusFilter);
@@ -89,7 +90,7 @@ export default function VisitsPage() {
 
   useEffect(() => {
     fetchVisits();
-  }, [page, statusFilter, subjectFilter, trialFilter, dateFrom, dateTo]);
+  }, [page, search, statusFilter, subjectFilter, trialFilter, dateFrom, dateTo]);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('确定要删除该访视记录吗？')) return;
@@ -116,6 +117,7 @@ export default function VisitsPage() {
   };
 
   const resetFilters = () => {
+    setSearch('');
     setStatusFilter('');
     setSubjectFilter('');
     setTrialFilter('');

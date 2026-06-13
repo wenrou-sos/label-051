@@ -147,12 +147,16 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     if (withdrawalReason !== undefined) {
       updateData.withdrawalReason = withdrawalReason || null;
     }
+    let oldTrialId: number | null = null;
     if (trialId !== undefined) {
       const trial = await prisma.trial.findUnique({ where: { id: trialId } });
       if (!trial) {
         return NextResponse.json({ error: '试验不存在' }, { status: 400 });
       }
-      updateData.trialId = trialId;
+      if (trialId !== existing.trialId) {
+        oldTrialId = existing.trialId;
+        updateData.trialId = trialId;
+      }
     }
 
     const subject = await prisma.subject.update({
@@ -163,6 +167,17 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
         createdBy: { select: { id: true, name: true, email: true } },
       },
     });
+
+    if (oldTrialId !== null && trialId !== undefined) {
+      await prisma.trial.update({
+        where: { id: oldTrialId },
+        data: { actualSubjects: { decrement: 1 } },
+      });
+      await prisma.trial.update({
+        where: { id: trialId },
+        data: { actualSubjects: { increment: 1 } },
+      });
+    }
 
     await prisma.auditLog.create({
       data: {
@@ -207,6 +222,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const userId = parseInt((session.user as any).id, 10);
 
     await prisma.subject.delete({ where: { id } });
+
+    await prisma.trial.update({
+      where: { id: existing.trialId },
+      data: { actualSubjects: { decrement: 1 } },
+    });
 
     await prisma.auditLog.create({
       data: {

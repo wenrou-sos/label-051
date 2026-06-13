@@ -51,15 +51,20 @@ export default function EditAdverseEventPage({ params }: PageParams) {
     }
   };
 
-  const fetchSubjects = async () => {
+  const fetchSubjects = async (trialId?: string) => {
     try {
-      const res = await fetch('/api/subjects?pageSize=100');
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      if (trialId) params.set('trialId', trialId);
+      const res = await fetch(`/api/subjects?${params.toString()}`);
       const data = await res.json();
       setSubjects(data.data || []);
     } catch (error) {
       console.error('获取受试者列表失败:', error);
     }
   };
+
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const fetchAdverseEvent = async () => {
     try {
@@ -95,18 +100,31 @@ export default function EditAdverseEventPage({ params }: PageParams) {
         description: ae.description || '',
         notes: ae.notes || '',
       });
+      if (ae.trialId) {
+        fetchSubjects(String(ae.trialId));
+      }
     } catch (error) {
       console.error('获取不良事件详情失败:', error);
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
   useEffect(() => {
     fetchTrials();
-    fetchSubjects();
     fetchAdverseEvent();
   }, [params.id]);
+
+  useEffect(() => {
+    if (isInitialLoad) return;
+    if (formData.trialId) {
+      fetchSubjects(formData.trialId);
+      setFormData((prev) => ({ ...prev, subjectId: '' }));
+    } else {
+      setSubjects([]);
+    }
+  }, [formData.trialId, isInitialLoad]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
