@@ -72,17 +72,35 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }),
     ]);
 
-    const subjectStatusDistribution: Record<string, number> = {};
+    const subjectStatusDistribution: Record<string, number> = {
+      SCREENING: 0,
+      ENROLLED: 0,
+      ACTIVE: 0,
+      WITHDRAWN: 0,
+      COMPLETED: 0,
+    };
     subjectStatusGroup.forEach((item) => {
       subjectStatusDistribution[item.status] = item._count.status;
     });
 
-    const visitStatusDistribution: Record<string, number> = {};
+    const visitStatusDistribution: Record<string, number> = {
+      SCHEDULED: 0,
+      IN_PROGRESS: 0,
+      COMPLETED: 0,
+      MISSED: 0,
+      CANCELLED: 0,
+    };
     visitStatusGroup.forEach((item) => {
       visitStatusDistribution[item.status] = item._count.status;
     });
 
-    const aeSeverityDistribution: Record<string, number> = {};
+    const aeSeverityDistribution: Record<string, number> = {
+      MILD: 0,
+      MODERATE: 0,
+      SEVERE: 0,
+      LIFE_THREATENING: 0,
+      FATAL: 0,
+    };
     aeSeverityGroup.forEach((item) => {
       aeSeverityDistribution[item.severity] = item._count.severity;
     });

@@ -20,21 +20,27 @@ import {
   aeSeverityLabels,
 } from '@/lib/utils';
 
-const SUBJECT_COLORS = ['#F59E0B', '#3B82F6', '#22C55E', '#EF4444', '#8B5CF6'];
-const VISIT_COLORS = ['#6B7280', '#3B82F6', '#22C55E', '#F59E0B', '#EF4444'];
-const AE_COLORS = ['#22C55E', '#F59E0B', '#F97316', '#EF4444', '#991B1B'];
+const SUBJECT_STATUS_ORDER = ['SCREENING', 'ENROLLED', 'ACTIVE', 'WITHDRAWN', 'COMPLETED'];
+const VISIT_STATUS_ORDER = ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'MISSED', 'CANCELLED'];
+const AE_SEVERITY_ORDER = ['MILD', 'MODERATE', 'SEVERE', 'LIFE_THREATENING', 'FATAL'];
 
-const COLOR_BY_STATUS: Record<string, string> = {
+const SUBJECT_COLOR_MAP: Record<string, string> = {
   SCREENING: '#F59E0B',
   ENROLLED: '#3B82F6',
-  ON_TREATMENT: '#22C55E',
+  ACTIVE: '#22C55E',
   WITHDRAWN: '#EF4444',
   COMPLETED: '#8B5CF6',
+};
+
+const VISIT_COLOR_MAP: Record<string, string> = {
   SCHEDULED: '#6B7280',
   IN_PROGRESS: '#3B82F6',
-  COMPLETED_VISIT: '#22C55E',
+  COMPLETED: '#22C55E',
   MISSED: '#F59E0B',
   CANCELLED: '#EF4444',
+};
+
+const AE_COLOR_MAP: Record<string, string> = {
   MILD: '#22C55E',
   MODERATE: '#F59E0B',
   SEVERE: '#F97316',
@@ -67,62 +73,42 @@ export default function TrialDetailCharts({
   visitCount,
   aeCount,
 }: TrialChartsProps) {
-  const subjectData = Object.entries(statistics.subjectStatusDistribution || {}).map(
-    ([key, value]) => ({
-      name: subjectStatusLabels[key]?.label || key,
-      value,
-      key,
-    })
-  );
+  const dist = statistics.subjectStatusDistribution || {};
+  const subjectData = SUBJECT_STATUS_ORDER.map((key) => ({
+    name: subjectStatusLabels[key]?.label || key,
+    value: dist[key] || 0,
+    key,
+  }));
 
-  const visitData = Object.entries(statistics.visitStatusDistribution || {}).map(
-    ([key, value]) => ({
-      name: visitStatusLabels[key]?.label || key,
-      value,
-      key,
-    })
-  );
+  const vDist = statistics.visitStatusDistribution || {};
+  const visitData = VISIT_STATUS_ORDER.map((key) => ({
+    name: visitStatusLabels[key]?.label || key,
+    value: vDist[key] || 0,
+    key,
+  }));
 
-  const aeData = Object.entries(statistics.aeSeverityDistribution || {}).map(
-    ([key, value]) => ({
-      name: aeSeverityLabels[key]?.label || key,
-      value,
-      key,
-    })
-  );
+  const aDist = statistics.aeSeverityDistribution || {};
+  const aeData = AE_SEVERITY_ORDER.map((key) => ({
+    name: aeSeverityLabels[key]?.label || key,
+    value: aDist[key] || 0,
+    key,
+  }));
 
-  const getSubjectFill = (entry: any, index: number) => {
-    return (
-      COLOR_BY_STATUS[entry.key as string] ||
-      SUBJECT_COLORS[index % SUBJECT_COLORS.length]
-    );
-  };
-
-  const getVisitFill = (entry: any, index: number) => {
-    const key = entry.payload?.key;
-    return (
-      COLOR_BY_STATUS[key as string] ||
-      VISIT_COLORS[index % VISIT_COLORS.length]
-    );
-  };
-
-  const getAeFill = (entry: any, index: number) => {
-    const key = entry.payload?.key;
-    return (
-      COLOR_BY_STATUS[key as string] ||
-      AE_COLORS[index % AE_COLORS.length]
-    );
-  };
+  const subjectHasAny = subjectData.some((d) => d.value > 0);
+  const visitHasAny = visitData.some((d) => d.value > 0);
+  const aeHasAny = aeData.some((d) => d.value > 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const d = payload[0];
+      const payloadName = d?.payload?.name;
       return (
         <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-2 text-sm">
           <p className="font-medium text-gray-900 mb-1">
-            {label || payload[0]?.payload?.name}
+            {label || payloadName}
           </p>
           <p className="text-gray-600">
-            数量: <span className="font-semibold text-gray-900">{payload[0]?.value}</span>
+            数量: <span className="font-semibold text-gray-900">{d?.value ?? 0}</span>
           </p>
         </div>
       );
@@ -137,7 +123,7 @@ export default function TrialDetailCharts({
           <Users className="w-5 h-5 text-green-500" />
           <h3 className="font-semibold text-gray-900">受试者状态分布</h3>
         </div>
-        {subjectCount > 0 && subjectData.length > 0 ? (
+        {subjectHasAny ? (
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -150,10 +136,10 @@ export default function TrialDetailCharts({
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {subjectData.map((entry, index) => (
+                  {subjectData.map((entry) => (
                     <Cell
-                      key={`cell-${index}`}
-                      fill={getSubjectFill(entry, index)}
+                      key={entry.key}
+                      fill={SUBJECT_COLOR_MAP[entry.key] || '#9CA3AF'}
                     />
                   ))}
                 </Pie>
@@ -164,6 +150,16 @@ export default function TrialDetailCharts({
                   verticalAlign="middle"
                   iconType="circle"
                   wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value: string, entry: any) => {
+                    const item = subjectData.find((d) => d.name === value);
+                    const count = item?.value || 0;
+                    return (
+                      <span className="text-gray-700">
+                        {value}
+                        <span className="text-gray-400 ml-1">({count})</span>
+                      </span>
+                    );
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -178,16 +174,21 @@ export default function TrialDetailCharts({
           <Calendar className="w-5 h-5 text-blue-500" />
           <h3 className="font-semibold text-gray-900">访视完成情况</h3>
         </div>
-        {visitCount > 0 && visitData.length > 0 ? (
+        {visitHasAny ? (
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={visitData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+              <BarChart
+                data={visitData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11 }}
                   interval={0}
-                  angle={0}
+                  angle={-15}
+                  textAnchor="end"
+                  height={45}
                 />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip content={<CustomTooltip />} />
@@ -195,11 +196,12 @@ export default function TrialDetailCharts({
                   dataKey="value"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
+                  minPointSize={3}
                 >
-                  {visitData.map((entry, index) => (
+                  {visitData.map((entry) => (
                     <Cell
-                      key={`cell-${index}`}
-                      fill={getVisitFill({ payload: entry }, index)}
+                      key={entry.key}
+                      fill={VISIT_COLOR_MAP[entry.key] || '#9CA3AF'}
                     />
                   ))}
                 </Bar>
@@ -216,15 +218,21 @@ export default function TrialDetailCharts({
           <AlertTriangle className="w-5 h-5 text-red-500" />
           <h3 className="font-semibold text-gray-900">AE 严重程度分布</h3>
         </div>
-        {aeCount > 0 && aeData.length > 0 ? (
+        {aeHasAny ? (
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={aeData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+              <BarChart
+                data={aeData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11 }}
                   interval={0}
+                  angle={-15}
+                  textAnchor="end"
+                  height={45}
                 />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip content={<CustomTooltip />} />
@@ -232,11 +240,12 @@ export default function TrialDetailCharts({
                   dataKey="value"
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
+                  minPointSize={3}
                 >
-                  {aeData.map((entry, index) => (
+                  {aeData.map((entry) => (
                     <Cell
-                      key={`cell-${index}`}
-                      fill={getAeFill({ payload: entry }, index)}
+                      key={entry.key}
+                      fill={AE_COLOR_MAP[entry.key] || '#9CA3AF'}
                     />
                   ))}
                 </Bar>
