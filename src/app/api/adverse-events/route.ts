@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
               id: true,
               trialNumber: true,
               shortName: true,
+              status: true,
             },
           },
           createdBy: {
@@ -190,7 +191,7 @@ export async function POST(req: NextRequest) {
       data: createData,
       include: {
         subject: { select: { id: true, subjectNumber: true, initials: true } },
-        trial: { select: { id: true, trialNumber: true, shortName: true } },
+        trial: { select: { id: true, trialNumber: true, shortName: true, status: true } },
         createdBy: { select: { id: true, name: true, email: true } },
       },
     });

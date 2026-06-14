@@ -324,18 +324,33 @@ export default function VisitsPage() {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/visits/${visit.id}/edit`}
-                          className="text-primary-600 hover:text-primary-900 p-1"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(visit.id)}
-                          className="text-red-600 hover:text-red-900 p-1"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {visit.trial?.status !== 'LOCKED' ? (
+                          <>
+                            <Link
+                              href={`/visits/${visit.id}/edit`}
+                              className="text-primary-600 hover:text-primary-900 p-1"
+                              title="编辑"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(visit.id)}
+                              className="text-red-600 hover:text-red-900 p-1"
+                              title="删除"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-gray-400 p-1 cursor-not-allowed" title="已锁库，无法编辑">
+                              <Edit className="w-4 h-4 opacity-50" />
+                            </span>
+                            <span className="text-gray-400 p-1 cursor-not-allowed" title="已锁库，无法删除">
+                              <Trash2 className="w-4 h-4 opacity-50" />
+                            </span>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         orderBy: { createdAt: 'desc' },
         include: {
           trial: {
-            select: { id: true, trialNumber: true, title: true },
+            select: { id: true, trialNumber: true, title: true, status: true },
           },
           createdBy: {
             select: { id: true, name: true, email: true },
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
       },
       include: {
         trial: {
-          select: { id: true, trialNumber: true, title: true },
+          select: { id: true, trialNumber: true, title: true, status: true },
         },
         createdBy: {
           select: { id: true, name: true, email: true },

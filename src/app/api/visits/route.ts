@@ -101,6 +101,7 @@ export async function GET(request: Request) {
               id: true,
               trialNumber: true,
               shortName: true,
+              status: true,
             },
           },
           createdBy: {
