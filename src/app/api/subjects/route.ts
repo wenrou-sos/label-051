@@ -105,6 +105,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '试验不存在' }, { status: 400 });
     }
 
+    if (trial.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法添加受试者' }, { status: 400 });
+    }
+
     let age: number | null = null;
     if (body.birthDate) {
       age = calculateAge(new Date(body.birthDate));

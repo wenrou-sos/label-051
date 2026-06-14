@@ -33,6 +33,8 @@ export default function EditTrialPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [isLocked, setIsLocked] = useState(false);
+
   useEffect(() => {
     const fetchTrial = async () => {
       try {
@@ -40,6 +42,9 @@ export default function EditTrialPage() {
         if (res.ok) {
           const response = await res.json();
           const data = response.data || {};
+          if (data.status === 'LOCKED') {
+            setIsLocked(true);
+          }
           setFormData({
             trialNumber: data.trialNumber || '',
             title: data.title || '',
@@ -280,12 +285,15 @@ export default function EditTrialPage() {
                   className="input-field"
                   value={formData.status}
                   onChange={handleChange}
+                  disabled={isLocked}
                 >
-                  {Object.entries(trialStatusLabels).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value.label}
-                    </option>
-                  ))}
+                  {Object.entries(trialStatusLabels)
+                    .filter(([key]) => key !== 'LOCKED')
+                    .map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {value.label}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -431,16 +439,30 @@ export default function EditTrialPage() {
             </div>
           </div>
 
+          {isLocked && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ 该试验已锁库，无法编辑。如需修改，请先由管理员解锁。
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
             <Link href="/trials" className="btn-secondary">
               取消
             </Link>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || isLocked}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   提交中...
                 </>
+              ) : isLocked ? (
+                '已锁库，无法保存'
               ) : (
                 '保存'
               )}

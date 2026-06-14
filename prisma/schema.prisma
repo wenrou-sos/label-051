@@ -25,6 +25,7 @@ enum TrialStatus {
   SUSPENDED
   COMPLETED
   TERMINATED
+  LOCKED
 }
 
 enum SubjectStatus {

@@ -40,6 +40,7 @@ export default function EditAdverseEventPage({ params }: PageParams) {
     notes: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLocked, setIsLocked] = useState(false);
 
   const fetchTrials = async () => {
     try {
@@ -74,6 +75,9 @@ export default function EditAdverseEventPage({ params }: PageParams) {
         return;
       }
       const { data: ae } = await res.json();
+      if (ae.trial?.status === 'LOCKED') {
+        setIsLocked(true);
+      }
       setFormData({
         aeNumber: ae.aeNumber || '',
         term: ae.term || '',
@@ -515,16 +519,30 @@ export default function EditAdverseEventPage({ params }: PageParams) {
             </div>
           </div>
 
+          {isLocked && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ 该试验已锁库，无法编辑不良事件。如需修改，请先由管理员解锁试验。
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
             <Link href={`/adverse-events/${params.id}`} className="btn-secondary">
               取消
             </Link>
-            <button type="submit" className="btn-primary" disabled={submitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={submitting || isLocked}
+            >
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   保存中...
                 </>
+              ) : isLocked ? (
+                '已锁库，无法保存'
               ) : (
                 '保存'
               )}

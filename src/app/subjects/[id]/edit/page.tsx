@@ -25,6 +25,7 @@ export default function EditSubjectPage() {
     withdrawalReason: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLocked, setIsLocked] = useState(false);
 
   const fetchTrials = async () => {
     try {
@@ -44,6 +45,9 @@ export default function EditSubjectPage() {
         if (res.ok) {
           const response = await res.json();
           const data = response.data || {};
+          if (data.trial?.status === 'LOCKED') {
+            setIsLocked(true);
+          }
           setFormData({
             subjectNumber: data.subjectNumber || '',
             initials: data.initials || '',
@@ -304,16 +308,30 @@ export default function EditSubjectPage() {
             </div>
           </div>
 
+          {isLocked && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ 该试验已锁库，无法编辑受试者。如需修改，请先由管理员解锁试验。
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
             <Link href="/subjects" className="btn-secondary">
               取消
             </Link>
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || isLocked}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   提交中...
                 </>
+              ) : isLocked ? (
+                '已锁库，无法保存'
               ) : (
                 '保存'
               )}

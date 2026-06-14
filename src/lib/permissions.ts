@@ -6,6 +6,8 @@ export const ROLE_PERMISSIONS: Record<RoleType, string[]> = {
     'trial:read',
     'trial:update',
     'trial:delete',
+    'trial:lock',
+    'trial:unlock',
     'subject:create',
     'subject:read',
     'subject:update',

@@ -36,6 +36,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
             trialNumber: true,
             title: true,
             shortName: true,
+            status: true,
           },
         },
         createdBy: {
@@ -100,6 +101,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: '受试者不存在' }, { status: 404 });
     }
 
+    const trial = await prisma.trial.findUnique({ where: { id: existing.trialId } });
+    if (trial?.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法修改受试者' }, { status: 400 });
+    }
+
     const body = await req.json();
     const {
       subjectNumber,
@@ -149,9 +155,12 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     }
     let oldTrialId: number | null = null;
     if (trialId !== undefined) {
-      const trial = await prisma.trial.findUnique({ where: { id: trialId } });
-      if (!trial) {
+      const newTrial = await prisma.trial.findUnique({ where: { id: trialId } });
+      if (!newTrial) {
         return NextResponse.json({ error: '试验不存在' }, { status: 400 });
+      }
+      if (newTrial.status === 'LOCKED') {
+        return NextResponse.json({ error: '目标试验已锁库，无法移动受试者' }, { status: 400 });
       }
       if (trialId !== existing.trialId) {
         oldTrialId = existing.trialId;
@@ -217,6 +226,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const existing = await prisma.subject.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: '受试者不存在' }, { status: 404 });
+    }
+
+    const trial = await prisma.trial.findUnique({ where: { id: existing.trialId } });
+    if (trial?.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法删除受试者' }, { status: 400 });
     }
 
     const userId = parseInt((session.user as any).id, 10);

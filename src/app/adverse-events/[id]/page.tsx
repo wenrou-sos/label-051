@@ -62,13 +62,20 @@ export default async function AdverseEventDetailPage({ params }: PageParams) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href={`/adverse-events/${ae.id}/edit`}
-            className="btn-primary"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            编辑
-          </Link>
+          {ae.trial?.status !== 'LOCKED' ? (
+            <Link
+              href={`/adverse-events/${ae.id}/edit`}
+              className="btn-primary"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              编辑
+            </Link>
+          ) : (
+            <span className="inline-flex items-center px-3 py-2 rounded-md text-sm text-gray-500 bg-gray-100 cursor-not-allowed">
+              <Edit className="w-4 h-4 mr-2 opacity-50" />
+              已锁库，无法编辑
+            </span>
+          )}
         </div>
       </div>
 

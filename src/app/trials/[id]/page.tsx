@@ -20,6 +20,7 @@ import {
   cn,
 } from '@/lib/utils';
 import TrialDetailCharts from './charts-client';
+import TrialLockButton from './lock-client';
 
 interface PageParams {
   params: { id: string };
@@ -59,13 +60,26 @@ export default async function TrialDetailPage({ params }: PageParams) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href={`/trials/${trial.id}/edit`}
-            className="btn-primary"
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            编辑
-          </Link>
+          <TrialLockButton
+            trialId={trial.id}
+            trialStatus={trial.status}
+            userRole={(session.user as any).role}
+          />
+          {trial.status !== 'LOCKED' && (
+            <Link
+              href={`/trials/${trial.id}/edit`}
+              className="btn-primary"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              编辑
+            </Link>
+          )}
+          {trial.status === 'LOCKED' && (
+            <span className="inline-flex items-center px-3 py-2 rounded-md text-sm text-gray-500 bg-gray-100 cursor-not-allowed">
+              <Edit className="w-4 h-4 mr-2 opacity-50" />
+              编辑（已锁库）
+            </span>
+          )}
         </div>
       </div>
 

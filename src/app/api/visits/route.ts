@@ -211,6 +211,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '试验不存在' }, { status: 404 });
     }
 
+    if (trial.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法添加访视' }, { status: 400 });
+    }
+
     if (subject.trialId !== trialId) {
       return NextResponse.json(
         { error: '受试者不属于所选试验，请选择正确的受试者' },

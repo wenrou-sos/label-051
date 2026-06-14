@@ -45,6 +45,7 @@ export const trialStatusLabels: Record<string, { label: string; color: string }>
   SUSPENDED: { label: '暂停', color: 'bg-yellow-100 text-yellow-800' },
   COMPLETED: { label: '已完成', color: 'bg-purple-100 text-purple-800' },
   TERMINATED: { label: '终止', color: 'bg-red-100 text-red-800' },
+  LOCKED: { label: '已锁库', color: 'bg-slate-700 text-white' },
 };
 
 export const subjectStatusLabels: Record<string, { label: string; color: string }> = {

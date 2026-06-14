@@ -42,6 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
             trialNumber: true,
             title: true,
             shortName: true,
+            status: true,
           },
         },
         createdBy: {
@@ -84,6 +85,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const existing = await prisma.visit.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: '访视不存在' }, { status: 404 });
+    }
+
+    const trial = await prisma.trial.findUnique({ where: { id: existing.trialId } });
+    if (trial?.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法修改访视' }, { status: 400 });
     }
 
     const body = await req.json();
@@ -187,6 +193,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     const existing = await prisma.visit.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json({ error: '访视不存在' }, { status: 404 });
+    }
+
+    const trial = await prisma.trial.findUnique({ where: { id: existing.trialId } });
+    if (trial?.status === 'LOCKED') {
+      return NextResponse.json({ error: '试验已锁库，无法删除访视' }, { status: 400 });
     }
 
     const userId = parseInt((session.user as any).id, 10);
